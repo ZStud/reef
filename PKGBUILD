@@ -7,8 +7,8 @@ arch=('x86_64' 'aarch64')
 url="https://github.com/ZStud/reef"
 license=('MIT')
 makedepends=('cargo')
-source=("$pkgbase-$pkgver.tar.gz")
-sha256sums=('SKIP')
+source=("$pkgbase-$pkgver.tar.gz::https://github.com/ZStud/reef/archive/v$pkgver.tar.gz")
+sha256sums=('06f9832fc092d007b2590de4c385cdb693b463a1b23131ed5547a3a143882427')
 
 prepare() {
     cd "$pkgbase-$pkgver"

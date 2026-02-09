@@ -114,7 +114,7 @@ reef history both          # log both
 
 ## What's Covered
 
-248 out of 251 bash constructs pass in the test suite. The 3 remaining are environment-specific (an unimplemented tool wrapper and missing dependencies), not translation failures.
+249 out of 251 bash constructs pass in the test suite. The 2 remaining are environment-specific (missing tool dependencies), not translation failures.
 
 | Category | Examples | Tier |
 |---|---|---|
