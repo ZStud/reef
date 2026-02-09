@@ -1,4 +1,9 @@
 function du --description "GNU du → dust wrapper"
+    if not command -q dust
+        command du $argv
+        return $status
+    end
+
     set -l dust_args
     set -l paths
 

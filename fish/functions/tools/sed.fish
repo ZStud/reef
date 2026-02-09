@@ -1,4 +1,9 @@
 function sed --description "GNU sed → sd wrapper"
+    if not command -q sd
+        command sed $argv
+        return $status
+    end
+
     set -l sd_args
     set -l files
     set -l expressions
@@ -28,7 +33,7 @@ function sed --description "GNU sed → sd wrapper"
             set -a expressions $argv[$i]
         else if test "$arg" = "-n"
             # -n (suppress output) — no sd equivalent, fall back to real sed
-            command /usr/bin/sed $argv
+            command sed $argv
             return $status
         else if test "$arg" = "-E"; or test "$arg" = "-r"; or test "$arg" = "--regexp-extended"
             # ERE mode — sd uses this by default, skip
@@ -50,7 +55,7 @@ function sed --description "GNU sed → sd wrapper"
 
     # If no expressions found, fall back to real sed
     if test (count $expressions) -eq 0
-        command /usr/bin/sed $argv
+        command sed $argv
         return $status
     end
 
@@ -65,7 +70,7 @@ function sed --description "GNU sed → sd wrapper"
         if test (count $parts) -lt 2
             # Can't parse, fall back
             echo "sed wrapper: can't parse '$expr' — falling back to GNU sed" >&2
-            command /usr/bin/sed $argv
+            command sed $argv
             return $status
         end
 

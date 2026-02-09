@@ -1,4 +1,9 @@
 function ps --description "GNU ps → procs wrapper"
+    if not command -q procs
+        command ps $argv
+        return $status
+    end
+
     set -l procs_args
 
     set -l i 1
@@ -23,10 +28,10 @@ function ps --description "GNU ps → procs wrapper"
             end
         else if test "$arg" = "-p"; or test "$arg" = "--pid"
             # procs doesn't reliably support PID lookup — fall back to real ps
-            command /usr/bin/ps $argv
+            command ps $argv
             return $status
         else if string match -qr '^-p[0-9]' -- $arg
-            command /usr/bin/ps $argv
+            command ps $argv
             return $status
         else if string match -qr '^--sort=' -- $arg
             set -l sortkey (string replace -- '--sort=' '' $arg)

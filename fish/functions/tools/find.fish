@@ -1,4 +1,9 @@
 function find --description "GNU find → fd wrapper"
+    if not command -q fd
+        command find $argv
+        return $status
+    end
+
     set -l fd_args
     set -l search_paths
     set -l has_pattern false

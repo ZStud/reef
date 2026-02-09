@@ -14,6 +14,7 @@ optdepends=(
     'sd: for sed→sd tool wrapper'
     'dust: for du→dust tool wrapper'
     'procs: for ps→procs tool wrapper'
+    'eza: for ls→eza tool wrapper'
 )
 source=("$pkgname-$pkgver.tar.gz")
 sha256sums=('SKIP')
@@ -53,6 +54,7 @@ package() {
     install -Dm644 fish/functions/tools/sed.fish "$pkgdir/usr/share/fish/vendor_functions.d/sed.fish"
     install -Dm644 fish/functions/tools/du.fish "$pkgdir/usr/share/fish/vendor_functions.d/du.fish"
     install -Dm644 fish/functions/tools/ps.fish "$pkgdir/usr/share/fish/vendor_functions.d/ps.fish"
+    install -Dm644 fish/functions/tools/ls.fish "$pkgdir/usr/share/fish/vendor_functions.d/ls.fish"
 
     # conf.d (auto-loaded on fish startup)
     install -Dm644 fish/conf.d/reef.fish "$pkgdir/usr/share/fish/vendor_conf.d/reef.fish"

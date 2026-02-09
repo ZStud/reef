@@ -1,4 +1,9 @@
 function grep --description "GNU grep → ripgrep (rg) wrapper"
+    if not command -q rg
+        command grep $argv
+        return $status
+    end
+
     set -l rg_args
 
     set -l i 1
