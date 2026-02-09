@@ -49,6 +49,20 @@ fish install.fish --tools      # also install tool wrappers
 
 The install script places the binary and fish functions in the right locations. No configuration needed.
 
+### Uninstall
+
+**AUR:**
+```
+yay -R reef              # removes everything
+yay -R reef-tools        # removes tool wrappers
+```
+
+**From source:**
+```bash
+fish install.fish --uninstall
+cargo uninstall reef      # if installed via cargo install
+```
+
 ---
 
 ## How It Works
