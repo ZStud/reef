@@ -138,11 +138,11 @@ reef history both          # log both
 
 ---
 
-## reef-tools — Modern CLI Wrappers
+## reef-tools — Drop-In Modern Tool Replacements
 
-`reef-tools` is a separate package that replaces legacy coreutils with faster, modern alternatives. You type the same commands you already know — the wrappers translate your flags automatically.
+`reef-tools` is a separate package that swaps legacy coreutils for faster, modern alternatives — transparently. These aren't simple aliases. Each wrapper fully mimics the original tool's flag interface, translating GNU flags to their modern equivalents so your muscle memory, scripts, and Stack Overflow commands all keep working.
 
-| You type | Runs | Why |
+| You type | Runs under the hood | Why |
 |---|---|---|
 | `grep` | [ripgrep](https://github.com/BurntSushi/ripgrep) | 5-10x faster. Respects `.gitignore`. Recursive by default. Unicode-aware. |
 | `find` | [fd](https://github.com/sharkdp/fd) | Simpler syntax, 5x faster, ignores `.git`/`node_modules` by default. Colorized output. |
@@ -151,16 +151,16 @@ reef history both          # log both
 | `du` | [dust](https://github.com/bootandy/dust) | Visual bar chart of disk usage. Instant overview instead of a wall of numbers. |
 | `ps` | [procs](https://github.com/dalance/procs) | Colorized. Searchable. Shows ports, Docker containers, tree view. |
 
-Every wrapper has a fallback guard — if the modern tool isn't installed, the original command runs unchanged. Nothing breaks.
+```
+❯ grep -ri "TODO" src/           # actually runs: rg -i "TODO" src/
+❯ find . -name "*.rs" -type f    # actually runs: fd -e rs -t f .
+❯ sed -i 's/foo/bar/g' file.txt  # actually runs: sd -i 'foo' 'bar' file.txt
+❯ ls -ltr                        # actually runs: eza -l --sort=modified --reverse
+❯ du -sh /var                    # actually runs: dust -d 1 /var
+❯ ps aux                         # actually runs: procs (shows all by default)
+```
 
-```
-❯ grep -r "TODO" src/            # runs ripgrep with translated flags
-❯ find . -name "*.rs" -type f    # runs fd with translated flags
-❯ sed -i 's/foo/bar/g' file.txt  # runs sd with translated args
-❯ ls -ltr                        # runs eza with translated flags
-❯ du -sh /var                    # runs dust with translated flags
-❯ ps aux                         # runs procs
-```
+The wrappers handle combined flags (`-sh` → `-s` + `-h`), flags with arguments (`-A 3`, `--max-depth=2`), `--include`/`--exclude` glob translation, and more. `--version` and `--help` pass through to the original tool so nothing surprises you. If a wrapper hits a flag it doesn't recognize, it falls back to the real GNU tool automatically — nothing breaks.
 
 ---
 
