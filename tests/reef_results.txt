@@ -1,6 +1,6 @@
 reef Test Suite Results
 =======================
-Date: Mon Feb  9 02:34:56 PM MST 2026
+Date: Mon Feb  9 03:09:03 PM MST 2026
 reef: unknown
 fish: fish, version 4.4.0
 bash: GNU bash, version 5.3.9(1)-release (x86_64-pc-linux-gnu)
@@ -543,23 +543,13 @@ PASS #27.6 [aws cli pattern] → T1:translate
 
 PASS #27.7 [kubectl pattern] → T1:translate
 
-FAIL #27.8 [terraform pattern] → T1:translate
-  cmd:  TF_VER=$(terraform version -json 2>/dev/null | head -1 || echo "none"); echo "TF: $TF_VER"
-  xlat: set TF_VER (terraform version -json 2>/dev/null | head -1; or echo "none")
-echo "TF: $TF_VER"
-  bash: TF: 
-  fish: TF: none
+PASS #27.8 [terraform pattern] → T1:translate
 
 PASS #27.9 [npm/node pattern] → T1:translate
 
 PASS #27.10 [go version pattern] → T1:translate
 
-FAIL #27.11 [java version pattern] → T1:translate
-  cmd:  JAVA_VER=$(java -version 2>&1 | head -1 || echo "none"); echo "Java: $JAVA_VER"
-  xlat: set JAVA_VER (java -version 2>&1 | head -1; or echo "none")
-echo "Java: $JAVA_VER"
-  bash: Java: bash: line 1: java: command not found
-  fish: Java: none
+PASS #27.11 [java version pattern] → T1:translate
 
 PASS #27.12 [ruby version pattern] → T1:translate
 
@@ -581,15 +571,10 @@ PASS #27.20 [system info one-liner] → T1:translate
 
 ═══════════════════════════════════════════
 SUMMARY
-T1 PASS:    179
+T1 PASS:    181
 T2 OK:      68
 T2 diff:    2
-FAIL:       2
+FAIL:       0
 SKIP:       0
 Total:      251
 ═══════════════════════════════════════════
-
-NOTES ON FAILURES
-Both FAILs are missing-dependency issues, not translation failures:
-  #27.8  — terraform is not installed; translation is correct
-  #27.11 — java is not installed; translation is correct
