@@ -32,15 +32,19 @@ Reef requires nothing. You install it and forget it exists.
 
 ### Arch / CachyOS (AUR)
 ```
-yay -S reef
+yay -S reef              # bash compatibility layer
+yay -S reef-tools        # modern tool wrappers (grep→rg, find→fd, ls→eza, etc.)
 ```
+
+The two packages are independent — install either or both.
 
 ### From source
 ```bash
 git clone https://github.com/ZStud/reef
 cd reef
 cargo build --release
-fish install.fish
+fish install.fish              # core only
+fish install.fish --tools      # also install tool wrappers
 ```
 
 The install script places the binary and fish functions in the right locations. No configuration needed.
