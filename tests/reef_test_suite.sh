@@ -359,7 +359,7 @@ run_test "13.5" "recursive function"           'factorial() { if [ $1 -le 1 ]; t
 # ─── CATEGORY 14: Redirections ───
 section "Redirections"
 
-run_test "14.1" "stderr to stdout"             'cat /nonexistent_reef_path 2>&1 | head -1'
+run_test "14.1" "stderr to stdout"             'command cat /nonexistent_reef_path 2>&1 | head -1'
 run_test "14.2" "discard stderr"               'ls /nonexistent_reef_path 2>/dev/null; echo "ok"'
 run_test "14.3" "discard both &>"              'ls /tmp /nonexistent_reef_path &>/dev/null; echo "ok"'
 run_test "14.4" "append >>"                    'echo "line1" > /tmp/reef_t.txt; echo "line2" >> /tmp/reef_t.txt; cat /tmp/reef_t.txt; rm /tmp/reef_t.txt'

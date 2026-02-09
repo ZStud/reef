@@ -1,6 +1,6 @@
 reef Test Suite Results
 =======================
-Date: Mon Feb  9 01:36:40 PM MST 2026
+Date: Mon Feb  9 02:34:56 PM MST 2026
 reef: unknown
 fish: fish, version 4.4.0
 bash: GNU bash, version 5.3.9(1)-release (x86_64-pc-linux-gnu)
@@ -293,11 +293,7 @@ T2   #13.5 [recursive function] → bash-exec (detect:yes)
 
 
 ── Redirections
-FAIL #14.1 [stderr to stdout] → T1:translate
-  cmd:  ls /nonexistent_reef_path 2>&1 | head -1
-  xlat: ls /nonexistent_reef_path 2>&1 | head -1
-  bash: ls: cannot access '/nonexistent_reef_path': No such file or directory
-  fish: "/nonexistent_reef_path": No such file or directory (os error 2)
+PASS #14.1 [stderr to stdout] → T1:translate
 
 PASS #14.2 [discard stderr] → T1:translate
 
@@ -585,19 +581,15 @@ PASS #27.20 [system info one-liner] → T1:translate
 
 ═══════════════════════════════════════════
 SUMMARY
-T1 PASS:    178
+T1 PASS:    179
 T2 OK:      68
 T2 diff:    2
-FAIL:       3
+FAIL:       2
 SKIP:       0
 Total:      251
-
-Notes on FAILs:
-  #14.1 — ls tool wrapper not yet implemented; fish's
-          built-in ls formats errors differently from
-          GNU coreutils ls.
-  #27.8 — works correctly when terraform is installed;
-          fails here because the dependency is missing.
-  #27.11 — works correctly when java is installed;
-           fails here because the dependency is missing.
 ═══════════════════════════════════════════
+
+NOTES ON FAILURES
+Both FAILs are missing-dependency issues, not translation failures:
+  #27.8  — terraform is not installed; translation is correct
+  #27.11 — java is not installed; translation is correct
