@@ -63,6 +63,9 @@ package_reef-tools() {
     install -Dm644 fish/functions/tools/ps.fish "$pkgdir/usr/share/fish/vendor_functions.d/ps.fish"
     install -Dm644 fish/functions/tools/ls.fish "$pkgdir/usr/share/fish/vendor_functions.d/ls.fish"
 
+    # conf.d (sources wrappers at startup to override fish builtins like grep.fish)
+    install -Dm644 fish/conf.d/reef-tools.fish "$pkgdir/usr/share/fish/vendor_conf.d/reef-tools.fish"
+
     # License
     install -Dm644 LICENSE "$pkgdir/usr/share/licenses/reef-tools/LICENSE"
 }

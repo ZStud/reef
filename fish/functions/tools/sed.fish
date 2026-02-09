@@ -4,6 +4,14 @@ function sed --description "GNU sed → sd wrapper"
         return $status
     end
 
+    # Pass through --version/--help to the real tool
+    for a in $argv
+        if test "$a" = "--version"; or test "$a" = "--help"
+            command sed $argv
+            return $status
+        end
+    end
+
     set -l sd_args
     set -l files
     set -l expressions

@@ -4,6 +4,14 @@ function ps --description "GNU ps → procs wrapper"
         return $status
     end
 
+    # Pass through --version/--help to the real tool
+    for a in $argv
+        if test "$a" = "--version"; or test "$a" = "--help"
+            command ps $argv
+            return $status
+        end
+    end
+
     set -l procs_args
 
     set -l i 1

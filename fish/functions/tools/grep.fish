@@ -4,6 +4,14 @@ function grep --description "GNU grep → ripgrep (rg) wrapper"
         return $status
     end
 
+    # Pass through --version/--help to the real tool
+    for a in $argv
+        if test "$a" = "--version"; or test "$a" = "--help"
+            command grep $argv
+            return $status
+        end
+    end
+
     set -l rg_args
 
     set -l i 1

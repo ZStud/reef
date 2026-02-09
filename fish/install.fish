@@ -61,6 +61,10 @@ if test $uninstall = true
         rm $fish_confd/reef.fish
         echo "  removed conf.d/reef.fish"
     end
+    if test -f $fish_confd/reef-tools.fish
+        rm $fish_confd/reef-tools.fish
+        echo "  removed conf.d/reef-tools.fish"
+    end
     echo ""
     echo "reef: uninstalled. Restart fish or run 'exec fish' to deactivate."
     return 0
