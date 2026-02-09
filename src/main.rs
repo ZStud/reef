@@ -1,7 +1,6 @@
 mod detect;
 mod env_diff;
 mod passthrough;
-mod patterns;
 mod translate;
 
 use clap::{Parser, Subcommand};

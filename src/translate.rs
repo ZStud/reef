@@ -244,8 +244,6 @@ fn rewrite_ampersand_redirect(input: &str) -> String {
 
 /// Rewrite bash brace range expansions like {1..5} to fish (seq 1 5).
 fn rewrite_brace_ranges(input: &str) -> String {
-    use std::borrow::Cow;
-
     let mut result = String::with_capacity(input.len());
     let chars: Vec<char> = input.chars().collect();
     let mut i = 0;
@@ -2037,29 +2035,6 @@ fn emit_redirect(redir: &Redir, out: &mut String) -> Result<(), TranslateError> 
 // ---------------------------------------------------------------------------
 
 /// Try to extract a simple string from a TopLevelWord.
-/// Check if a string is a bare command substitution: `(cmd ...)` where the
-/// outer parens wrap the entire string (handles nested parens correctly).
-/// Excludes `(math ...)` since those shouldn't be word-split.
-fn is_bare_command_subst(s: &str) -> bool {
-    if !s.starts_with('(') || !s.ends_with(')') || s.starts_with("(math ") {
-        return false;
-    }
-    let mut depth = 0i32;
-    for (i, c) in s.chars().enumerate() {
-        match c {
-            '(' => depth += 1,
-            ')' => {
-                depth -= 1;
-                if depth == 0 && i < s.len() - 1 {
-                    return false; // closing paren before end = multiple substs
-                }
-            }
-            _ => {}
-        }
-    }
-    depth == 0
-}
-
 fn word_as_str(word: &TLWord) -> Option<String> {
     match &word.0 {
         ComplexWord::Single(Word::Simple(SimpleWord::Literal(s))) => Some(s.clone()),

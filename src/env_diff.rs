@@ -64,55 +64,6 @@ pub struct EnvSnapshot {
 }
 
 impl EnvSnapshot {
-    /// Capture the current environment by running a bash command that dumps
-    /// all env vars and the cwd, separated by sentinel markers.
-    pub fn capture_with_command(bash_command: &str) -> Result<(Self, i32), String> {
-        // Build a bash script that:
-        // 1. Runs the user's command
-        // 2. Prints env vars (using `env` for exported vars)
-        // 3. Prints cwd
-        // We use null bytes as record separators within env to handle
-        // multi-line values, but `env -0` + sentinel markers is simpler.
-        let script = format!(
-            r#"{cmd}
-__reef_exit=$?
-echo '{env_marker}'
-env -0
-echo '{cwd_marker}'
-pwd
-exit $__reef_exit"#,
-            cmd = bash_command,
-            env_marker = ENV_MARKER,
-            cwd_marker = CWD_MARKER,
-        );
-
-        let output = Command::new("bash")
-            .args(["-c", &script])
-            .output()
-            .map_err(|e| format!("failed to run bash: {}", e))?;
-
-        let exit_code = output.status.code().unwrap_or(1);
-        let stdout = String::from_utf8_lossy(&output.stdout);
-
-        // Parse the output: everything after ENV_MARKER until CWD_MARKER is env,
-        // everything after CWD_MARKER is cwd.
-        let env_start = stdout.find(ENV_MARKER);
-        let cwd_start = stdout.find(CWD_MARKER);
-
-        let (vars, cwd) = match (env_start, cwd_start) {
-            (Some(env_pos), Some(cwd_pos)) => {
-                let env_section = &stdout[env_pos + ENV_MARKER.len()..cwd_pos];
-                let cwd_section = stdout[cwd_pos + CWD_MARKER.len()..].trim();
-
-                let vars = parse_null_separated_env(env_section);
-                (vars, cwd_section.to_string())
-            }
-            _ => (HashMap::new(), String::new()),
-        };
-
-        Ok((EnvSnapshot { vars, cwd }, exit_code))
-    }
-
     /// Capture just the current environment (no user command).
     pub fn capture_current() -> Result<Self, String> {
         let script = format!(
