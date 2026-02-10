@@ -2,6 +2,8 @@
 
 **Bash compatibility for fish shell. Just works.**
 
+(CHECK WIKI FOR UPDATE PLANS)
+
 Reef makes bash syntax work seamlessly inside [fish](https://fishshell.com). No prefix commands, no mode switching, no learning curve. You type bash — fish runs it.
 
 ```
