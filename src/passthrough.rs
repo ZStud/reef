@@ -3,7 +3,7 @@ use std::process::{Command, Stdio};
 
 use crate::env_diff::{self, EnvSnapshot};
 
-/// Sentinel markers — must match env_diff.rs
+/// Sentinel markers for separating env data from command output in bash.
 const ENV_MARKER: &str = "__REEF_ENV_MARKER_5f3a__";
 const CWD_MARKER: &str = "__REEF_CWD_MARKER_5f3a__";
 
@@ -23,40 +23,11 @@ const CWD_MARKER: &str = "__REEF_CWD_MARKER_5f3a__";
 /// sources the output, so we separate command output (printed to stderr
 /// for the user to see) from fish commands (printed to stdout for eval).
 pub fn bash_exec(command: &str) -> i32 {
-    // Snapshot current environment
-    let before = match EnvSnapshot::capture_current() {
-        Ok(snap) => snap,
-        Err(e) => {
-            eprintln!("reef: failed to capture environment: {}", e);
-            return 1;
-        }
-    };
+    let before = EnvSnapshot::capture_current();
 
-    // Build a bash script that:
-    // 1. Runs the user's command (stderr goes to terminal, stdout to terminal)
-    // 2. Prints sentinel markers and env dump to fd 3
-    // We use fd 3 to separate command output from env data.
-    //
-    // However, since the fish caller needs to `| source` our output,
-    // we use a simpler approach: run the command with fully inherited
-    // stdio, then do a second quick bash to capture env.
-    //
-    // Problem: env changes from the command are lost between processes.
-    //
-    // Solution: Run everything in one bash, redirect command output to
-    // stderr (so user sees it), and env data to stdout (for fish to eval).
-    let script = format!(
-        r#"eval {cmd} >&2
-__reef_exit=$?
-echo '{env_marker}'
-env -0
-echo '{cwd_marker}'
-pwd
-exit $__reef_exit"#,
-        cmd = shell_escape_for_bash(command),
-        env_marker = ENV_MARKER,
-        cwd_marker = CWD_MARKER,
-    );
+    // Run the user's command in bash with output to stderr (so user sees it),
+    // then dump env to stdout (for fish to eval).
+    let script = build_script(&shell_escape_for_bash(command), " >&2", true);
 
     let output = match Command::new("bash")
         .args(["-c", &script])
@@ -67,37 +38,13 @@ exit $__reef_exit"#,
     {
         Ok(o) => o,
         Err(e) => {
-            eprintln!("reef: failed to run bash: {}", e);
+            eprintln!("reef: failed to run bash: {e}");
             return 1;
         }
     };
 
     let exit_code = output.status.code().unwrap_or(1);
-    let stdout = String::from_utf8_lossy(&output.stdout);
-
-    // Parse env data from stdout (after the marker)
-    let env_start = stdout.find(ENV_MARKER);
-    let cwd_start = stdout.find(CWD_MARKER);
-
-    if let (Some(env_pos), Some(cwd_pos)) = (env_start, cwd_start) {
-        let env_section = &stdout[env_pos + ENV_MARKER.len()..cwd_pos];
-        let cwd_section = stdout[cwd_pos + CWD_MARKER.len()..].trim();
-
-        let after_vars = env_diff::parse_null_separated_env(env_section);
-        let after = EnvSnapshot {
-            vars: after_vars,
-            cwd: cwd_section.to_string(),
-        };
-
-        // Print fish commands to apply env changes
-        let commands = before.diff(&after);
-        let stdout_handle = io::stdout();
-        let mut out = stdout_handle.lock();
-        for cmd in &commands {
-            let _ = writeln!(out, "{}", cmd);
-        }
-    }
-
+    diff_and_print_env(&before, &output.stdout);
     exit_code
 }
 
@@ -105,40 +52,33 @@ exit $__reef_exit"#,
 /// fish commands. No command output is shown. Used by `source.fish`
 /// to source bash scripts and capture their environment side effects.
 pub fn bash_exec_env_diff(command: &str) -> i32 {
-    // Snapshot current environment
-    let before = match EnvSnapshot::capture_current() {
-        Ok(snap) => snap,
-        Err(e) => {
-            eprintln!("reef: failed to capture environment: {}", e);
-            return 1;
-        }
-    };
+    let before = EnvSnapshot::capture_current();
 
     // Run the command and capture env afterward — all in one bash invocation.
     // Suppress command stdout/stderr since we only want the env diff.
-    let script = format!(
-        r#"eval {cmd} >/dev/null 2>&1
-echo '{env_marker}'
-env -0
-echo '{cwd_marker}'
-pwd"#,
-        cmd = shell_escape_for_bash(command),
-        env_marker = ENV_MARKER,
-        cwd_marker = CWD_MARKER,
-    );
+    let script = build_script(&shell_escape_for_bash(command), " >/dev/null 2>&1", false);
 
-    let output = match Command::new("bash")
-        .args(["-c", &script])
-        .output()
-    {
+    let output = match Command::new("bash").args(["-c", &script]).output() {
         Ok(o) => o,
         Err(e) => {
-            eprintln!("reef: failed to run bash: {}", e);
+            eprintln!("reef: failed to run bash: {e}");
             return 1;
         }
     };
 
-    let stdout = String::from_utf8_lossy(&output.stdout);
+    diff_and_print_env(&before, &output.stdout);
+
+    if output.status.success() {
+        0
+    } else {
+        output.status.code().unwrap_or(1)
+    }
+}
+
+/// Parse env data from bash stdout (after sentinel markers), diff against
+/// the before snapshot, and print fish `set` commands to stdout.
+fn diff_and_print_env(before: &EnvSnapshot, raw_stdout: &[u8]) {
+    let stdout = String::from_utf8_lossy(raw_stdout);
 
     let env_start = stdout.find(ENV_MARKER);
     let cwd_start = stdout.find(CWD_MARKER);
@@ -147,28 +87,62 @@ pwd"#,
         let env_section = &stdout[env_pos + ENV_MARKER.len()..cwd_pos];
         let cwd_section = stdout[cwd_pos + CWD_MARKER.len()..].trim();
 
-        let after_vars = env_diff::parse_null_separated_env(env_section);
         let after = EnvSnapshot {
-            vars: after_vars,
+            vars: env_diff::parse_null_separated_env(env_section),
             cwd: cwd_section.to_string(),
         };
 
         let commands = before.diff(&after);
-        let stdout_handle = io::stdout();
-        let mut out = stdout_handle.lock();
-        for cmd in &commands {
-            let _ = writeln!(out, "{}", cmd);
+        if commands.is_empty() {
+            return;
         }
+        // Build single buffer and write once to minimize syscalls
+        let total_len: usize = commands.iter().map(|c| c.len() + 1).sum();
+        let mut buf = String::with_capacity(total_len);
+        for cmd in &commands {
+            buf.push_str(cmd);
+            buf.push('\n');
+        }
+        let _ = io::stdout().lock().write_all(buf.as_bytes());
     }
+}
 
-    // For env-diff mode, always return 0 if bash ran successfully
-    if output.status.success() { 0 } else { output.status.code().unwrap_or(1) }
+/// Build a bash script that evals the command with the given redirect suffix,
+/// then dumps env markers + env -0 + cwd for the diff.
+fn build_script(escaped_cmd: &str, redirect: &str, track_exit: bool) -> String {
+    let mut s = String::with_capacity(escaped_cmd.len() + 100);
+    s.push_str("eval ");
+    s.push_str(escaped_cmd);
+    s.push_str(redirect);
+    s.push('\n');
+    if track_exit {
+        s.push_str("__reef_exit=$?\n");
+    }
+    s.push_str("echo '");
+    s.push_str(ENV_MARKER);
+    s.push_str("'\nenv -0\necho '");
+    s.push_str(CWD_MARKER);
+    s.push_str("'\npwd");
+    if track_exit {
+        s.push_str("\nexit $__reef_exit");
+    }
+    s
 }
 
 /// Escape a command string for embedding in a bash `eval` statement.
 /// We single-quote the entire thing to prevent any interpretation.
 fn shell_escape_for_bash(s: &str) -> String {
-    format!("'{}'", s.replace('\'', "'\\''"))
+    let mut result = String::with_capacity(s.len() + 2);
+    result.push('\'');
+    for &b in s.as_bytes() {
+        if b == b'\'' {
+            result.push_str("'\\''");
+        } else {
+            result.push(b as char);
+        }
+    }
+    result.push('\'');
+    result
 }
 
 #[cfg(test)]

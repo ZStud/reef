@@ -1,6 +1,6 @@
 reef Test Suite Results
 =======================
-Date: Mon Feb  9 03:09:03 PM MST 2026
+Date: Wed Feb 11 05:01:49 PM MST 2026
 reef: unknown
 fish: fish, version 4.4.0
 bash: GNU bash, version 5.3.9(1)-release (x86_64-pc-linux-gnu)
@@ -11,7 +11,7 @@ PASS #1.1 [simple export] → T1:translate
 
 PASS #1.2 [export with spaces] → T1:translate
 
-T2   #1.3 [export PATH append] → bash-exec (detect:yes)
+PASS #1.3 [export PATH append] → T1:translate
 
 PASS #1.4 [multiple exports] → T1:translate
 
@@ -23,13 +23,13 @@ PASS #1.7 [declare -x] → T1:translate
 
 PASS #1.8 [local in function] → T1:translate
 
-PASS #1.9 [inline var before command] → T1:translate
+T2   #1.9 [inline var before command] → bash-exec (detect:yes)
 
 PASS #1.10 [assignment with cmd subst] → T1:translate
 
 PASS #1.11 [assignment with backticks] → T1:translate
 
-PASS #1.12 [multi inline assignments] → T1:translate
+T2   #1.12 [multi inline assignments] → bash-exec (detect:yes)
 
 
 ── Command Substitution
@@ -101,7 +101,7 @@ PASS #4.1 [for with $(seq)] → T1:translate
 
 PASS #4.2 [for with word list] → T1:translate
 
-T2   #4.3 [for with glob] → bash-exec (detect:yes)
+PASS #4.3 [for with glob] → T1:translate
 
 PASS #4.4 [for with brace range] → T1:translate
 
@@ -119,11 +119,11 @@ PASS #4.10 [for with quoted items] → T1:translate
 
 PASS #4.11 [for with cmd subst words] → T1:translate
 
-T2   #4.12 [c-style for loop] → bash-exec (detect:yes)
+PASS #4.12 [c-style for loop] → T1:translate
 
-T2   #4.13 [c-style for with step] → bash-exec (detect:yes)
+PASS #4.13 [c-style for with step] → T1:translate
 
-T2   #4.14 [c-style for countdown] → bash-exec (detect:yes)
+PASS #4.14 [c-style for countdown] → T1:translate
 
 PASS #4.15 [while read -r from pipe] → T1:translate
 
@@ -149,25 +149,81 @@ PASS #5.9 [ternary] → T1:translate
 
 PASS #5.10 [nested ternary] → T1:translate
 
-T2   #5.11 [bitwise AND] → bash-exec (detect:yes)
+PASS #5.11 [bitwise AND] → T1:translate
 
-T2   #5.12 [bitwise OR] → bash-exec (detect:yes)
+PASS #5.12 [bitwise OR] → T1:translate
 
-T2   #5.13 [bitwise XOR] → bash-exec (detect:yes)
+PASS #5.13 [bitwise XOR] → T1:translate
 
-T2   #5.14 [left shift] → bash-exec (detect:yes)
+PASS #5.14 [left shift] → T1:translate
 
-T2   #5.15 [right shift] → bash-exec (detect:yes)
+PASS #5.15 [right shift] → T1:translate
 
 PASS #5.16 [negation] → T1:translate
 
 PASS #5.17 [arith in condition] → T1:translate
 
-T2   #5.18 [(( )) as test] → bash-exec (detect:yes)
+PASS #5.18 [(( )) as test] → T1:translate
 
-T2   #5.19 [(( )) increment] → bash-exec (detect:no)
+PASS #5.19 [(( )) increment] → T1:translate
 
-T2   #5.20 [let command] → bash-exec (detect:no)
+PASS #5.20 [let command] → T1:translate
+
+PASS #5.21 [subtraction] → T1:translate
+
+PASS #5.22 [division] → T1:translate
+
+PASS #5.23 [power] → T1:translate
+
+PASS #5.24 [complex grouping] → T1:translate
+
+PASS #5.25 [unary negative] → T1:translate
+
+PASS #5.26 [three variables] → T1:translate
+
+PASS #5.27 [comparison <=] → T1:translate
+
+PASS #5.28 [comparison >=] → T1:translate
+
+PASS #5.29 [comparison !=] → T1:translate
+
+PASS #5.30 [logic AND] → T1:translate
+
+PASS #5.31 [logic OR] → T1:translate
+
+PASS #5.32 [arith in assign] → T1:translate
+
+PASS #5.33 [arith in export] → T1:translate
+
+PASS #5.34 [arith in local fn] → T1:translate
+
+PASS #5.35 [multiple arith] → T1:translate
+
+PASS #5.36 [arith in dquote] → T1:translate
+
+PASS #5.37 [(( )) assign] → T1:translate
+
+PASS #5.38 [(( )) decrement] → T1:translate
+
+PASS #5.39 [(( )) plus-equals] → T1:translate
+
+PASS #5.40 [(( )) minus-equals] → T1:translate
+
+PASS #5.41 [(( )) times-equals] → T1:translate
+
+PASS #5.42 [(( )) div-equals] → T1:translate
+
+PASS #5.43 [(( )) mod-equals] → T1:translate
+
+PASS #5.44 [(( )) assign expr] → T1:translate
+
+PASS #5.45 [(( )) pre-increment] → T1:translate
+
+PASS #5.46 [(( )) pre-decrement] → T1:translate
+
+PASS #5.47 [arith loop counter] → T1:translate
+
+PASS #5.48 [(( )) in while loop] → T1:translate
 
 
 ── Parameter Expansion
@@ -187,23 +243,23 @@ PASS #6.7 [${var#*/} prefix] → T1:translate
 
 PASS #6.8 [${var##*/} longest prefix] → T1:translate
 
-T2   #6.9 [${var/old/new} replace] → bash-exec (detect:yes)
+PASS #6.9 [${var/old/new} replace] → T1:translate
 
-T2   #6.10 [${var//old/new} global repl] → bash-exec (detect:yes)
+PASS #6.10 [${var//old/new} global repl] → T1:translate
 
 PASS #6.11 [${var} simple braces] → T1:translate
 
-T2   #6.12 [${var:0:5} substring] → bash-exec (detect:yes)
+PASS #6.12 [${var:0:5} substring] → T1:translate
 
-T2   #6.13 [${var:6} offset] → bash-exec (detect:yes)
+PASS #6.13 [${var:6} offset] → T1:translate
 
-T2   #6.14 [${var^^} uppercase] → bash-exec (detect:yes)
+PASS #6.14 [${var^^} uppercase] → T1:translate
 
-T2   #6.15 [${var,,} lowercase] → bash-exec (detect:yes)
+PASS #6.15 [${var,,} lowercase] → T1:translate
 
-T2   #6.16 [${var^} capitalize] → bash-exec (detect:yes)
+PASS #6.16 [${var^} capitalize] → T1:translate
 
-T2   #6.17 [${!var} indirect] → bash-exec (detect:yes)
+PASS #6.17 [${!var} indirect] → T1:translate
 
 
 ── Here Strings
@@ -219,41 +275,41 @@ PASS #7.5 [here string single quoted] → T1:translate
 
 
 ── Heredocs
-T2   #8.1 [basic heredoc] → bash-exec (detect:no)
+PASS #8.1 [basic heredoc] → T1:translate
 
-T2   #8.2 [heredoc with expansion] → bash-exec (detect:no)
+PASS #8.2 [heredoc with expansion] → T1:translate
 
-T2   #8.3 [heredoc no expansion] → bash-exec (detect:yes)
+PASS #8.3 [heredoc no expansion] → T1:translate
 
-T2   #8.4 [heredoc piped] → bash-exec (detect:no)
+PASS #8.4 [heredoc piped] → T1:translate
 
 
 ── Process Substitution
-T2   #9.1 [diff <()] → bash-exec (detect:yes)
+PASS #9.1 [diff <()] → T1:translate
 
-T2   #9.2 [paste <(seq)] → bash-exec (detect:yes)
+PASS #9.2 [paste <(seq)] → T1:translate
 
-T2   #9.3 [while read < <()] → bash-exec (detect:yes)
+PASS #9.3 [while read < <()] → T1:translate
 
-T2   #9.4 [cat <(echo)] → bash-exec (detect:yes)
+PASS #9.4 [cat <(echo)] → T1:translate
 
 
 ── Arrays (Indexed)
-T2   #10.1 [array access] → bash-exec (detect:yes)
+PASS #10.1 [array access] → T1:translate
 
-T2   #10.2 [array all elements] → bash-exec (detect:yes)
+PASS #10.2 [array all elements] → T1:translate
 
-T2   #10.3 [array length] → bash-exec (detect:yes)
+PASS #10.3 [array length] → T1:translate
 
-T2   #10.4 [array append] → bash-exec (detect:yes)
+PASS #10.4 [array append] → T1:translate
 
-T2   #10.5 [array slice] → bash-exec (detect:yes)
+PASS #10.5 [array slice] → T1:translate
 
-T2   #10.6 [array in for loop] → bash-exec (detect:yes)
+PASS #10.6 [array in for loop] → T1:translate
 
-T2   #10.7 [array element delete] → bash-exec (detect:yes)
+PASS #10.7 [array element delete] → T1:translate
 
-T2   #10.8 [array with spaces] → bash-exec (detect:yes)
+PASS #10.8 [array with spaces] → T1:translate
 
 
 ── Associative Arrays
@@ -287,7 +343,7 @@ PASS #13.2 [parens syntax] → T1:translate
 
 PASS #13.3 [function with local] → T1:translate
 
-T2   #13.4 [function with return] → bash-exec (detect:yes)
+PASS #13.4 [function with return] → T1:translate
 
 T2   #13.5 [recursive function] → bash-exec (detect:yes)
 
@@ -305,15 +361,15 @@ PASS #14.5 [redirect stderr only] → T1:translate
 
 
 ── Subshells & Grouping
-T2   #15.1 [subshell basic] → bash-exec (detect:no)
+PASS #15.1 [subshell basic] → T1:translate
 
-T2   #15.2 [subshell isolation] → bash-exec (detect:no)
+PASS #15.2 [subshell isolation] → T1:translate
 
-T2   #15.3 [subshell cd] → bash-exec (detect:yes)
+PASS #15.3 [subshell cd] → T1:translate
 
 PASS #15.4 [brace group piped] → T1:translate
 
-T2   #15.5 [exit from subshell] → bash-exec (detect:no)
+T2   #15.5 [exit from subshell] → bash-exec
 
 PASS #15.6 [background and wait] → T1:translate
 
@@ -387,15 +443,11 @@ PASS #19.7 [adjacent quoting] → T1:translate
 
 
 ── Traps & Signals
-T2~  #20.1 [trap EXIT] → bash-exec (detect:no, output differs)
-  cmd:  trap "echo cleanup" EXIT; echo "running"
-  bash: running
-cleanup
-  bexe: running
+PASS #20.1 [trap EXIT] → T1:translate
 
-T2   #20.2 [trap ERR] → bash-exec (detect:no)
+T2   #20.2 [trap ERR] → bash-exec (detect:yes)
 
-T2   #20.3 [trap cleanup file] → bash-exec (detect:yes)
+PASS #20.3 [trap cleanup file] → T1:translate
 
 
 ── Namerefs & Advanced
@@ -405,15 +457,15 @@ T2   #21.2 [nameref assignment] → bash-exec (detect:yes)
 
 T2   #21.3 [nameref in function] → bash-exec (detect:yes)
 
-PASS #21.4 [eval simple] → T1:translate
+T2   #21.4 [eval simple] → bash-exec (detect:yes)
 
-PASS #21.5 [eval indirect] → T1:translate
+T2   #21.5 [eval indirect] → bash-exec (detect:yes)
 
 
 ── mapfile & readarray
-T2   #22.1 [mapfile from cmd] → bash-exec (detect:yes)
+PASS #22.1 [mapfile from cmd] → T1:translate
 
-T2   #22.2 [readarray] → bash-exec (detect:yes)
+PASS #22.2 [readarray] → T1:translate
 
 
 ── Coprocesses
@@ -443,21 +495,21 @@ PASS #24.10 [export + run] → T1:translate
 
 
 ── Obscure & Exotic
-T2   #25.1 [ANSI-C quoting] → bash-exec (detect:no)
+PASS #25.1 [ANSI-C quoting] → T1:translate
 
 PASS #25.2 [brace alpha range] → T1:translate
 
 PASS #25.3 [brace seq step] → T1:translate
 
-T2   #25.4 [printf repetition] → bash-exec (detect:yes)
+PASS #25.4 [printf repetition] → T1:translate
 
 PASS #25.5 [tilde expansion] → T1:translate
 
 PASS #25.6 [empty if body (: noop)] → T1:translate
 
-T2   #25.7 [IFS manipulation] → bash-exec (detect:yes)
+PASS #25.7 [IFS manipulation] → T1:translate
 
-T2   #25.8 [regex capture groups] → bash-exec (detect:yes)
+PASS #25.8 [regex capture groups] → T1:translate
 
 PASS #25.9 [wait for bg jobs] → T1:translate
 
@@ -467,7 +519,7 @@ PASS #25.11 [set -eo pipefail] → T1:translate
 
 PASS #25.12 [multiple redirection] → T1:translate
 
-T2   #25.13 [arith in array index] → bash-exec (detect:yes)
+PASS #25.13 [arith in array index] → T1:translate
 
 T2   #25.14 [extglob] → bash-exec (detect:yes)
 
@@ -491,9 +543,9 @@ PASS #26.3 [var with special chars] → T1:translate
 
 PASS #26.4 [semicolons everywhere] → T1:translate
 
-T2   #26.5 [nested subshells] → bash-exec (detect:no)
+PASS #26.5 [nested subshells] → T1:translate
 
-T2~  #26.6 [empty subshell] → bash-exec (detect:no, output differs)
+T2~  #26.6 [empty subshell] → bash-exec (detect:yes, output differs)
   cmd:  (); echo "after"
   bash: 
   bexe: bash: eval: line 1: syntax error near unexpected token `)'
@@ -505,9 +557,9 @@ PASS #26.8 [arithmetic overflow] → T1:translate
 
 PASS #26.9 [whitespace in var] → T1:translate
 
-T2   #26.10 [newline in var] → bash-exec (detect:no)
+PASS #26.10 [newline in var] → T1:translate
 
-T2   #26.11 [tab in var] → bash-exec (detect:no)
+PASS #26.11 [tab in var] → T1:translate
 
 PASS #26.12 [empty case match] → T1:translate
 
@@ -519,7 +571,7 @@ PASS #26.15 [while false] → T1:translate
 
 PASS #26.16 [export existing PATH] → T1:translate
 
-T2   #26.17 [nested arithmetic] → bash-exec (detect:yes)
+PASS #26.17 [nested arithmetic] → T1:translate
 
 PASS #26.18 [command with equals] → T1:translate
 
@@ -565,16 +617,65 @@ PASS #27.17 [pip install pattern] → T1:translate
 
 PASS #27.18 [conda activate pattern] → T1:translate
 
-T2   #27.19 [process CSV files] → bash-exec (detect:yes)
+DIFF #27.19 [process CSV files] → T1:translate (fish glob returns nothing on no match)
+  cmd:  for f in *.csv; do [ -f "$f" ] && wc -l "$f" || echo "no csv files"; break; done
+  xlat: for f in *.csv
+[ -f "$f" ]; and wc -l "$f"; or echo "no csv files"
+break
+  bash: no csv files
+  fish: 
 
 PASS #27.20 [system info one-liner] → T1:translate
 
+
+── Extended Translation Coverage
+PASS #28.1 [indirect var] → T1:translate
+
+PASS #28.2 [hostname var] → T1:translate
+
+PASS #28.3 [shift basic] → T1:translate
+
+PASS #28.4 [shift N] → T1:translate
+
+PASS #28.5 [alias define] → T1:translate
+
+PASS #28.6 [printf repeat] → T1:translate
+
+PASS #28.7 [var test -v] → T1:translate
+
+PASS #28.8 [var test -v unset] → T1:translate
+
+PASS #28.9 [read with flags] → T1:translate
+
+PASS #28.10 [mapfile here string] → T1:translate
+
+PASS #28.11 [readarray process sub] → T1:translate
+
+PASS #28.12 [regex capture] → T1:translate
+
+PASS #28.13 [pipe stderr] → T1:translate
+
+PASS #28.14 [param transform Q] → T1:translate
+
+PASS #28.15 [param transform U] → T1:translate
+
+PASS #28.16 [param transform L] → T1:translate
+
+PASS #28.17 [pipestatus basic] → T1:translate
+
+PASS #28.18 [bash source var] → T1:translate
+
+PASS #28.19 [random var] → T1:translate
+
+PASS #28.20 [read -s flag] → T1:translate
+
 ═══════════════════════════════════════════
 SUMMARY
-T1 PASS:    181
-T2 OK:      68
-T2 diff:    2
+T1 PASS:    279
+T1 DIFF:    1
+T2 OK:      18
+T2 diff:    1
 FAIL:       0
 SKIP:       0
-Total:      251
+Total:      299
 ═══════════════════════════════════════════

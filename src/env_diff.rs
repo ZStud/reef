@@ -1,11 +1,8 @@
+use std::borrow::Cow;
 use std::collections::HashMap;
-use std::process::Command;
-
-/// Sentinel markers used to separate sections in bash output.
-const ENV_MARKER: &str = "__REEF_ENV_MARKER_5f3a__";
-const CWD_MARKER: &str = "__REEF_CWD_MARKER_5f3a__";
 
 /// Variables that are internal to bash and should not be synced to fish.
+/// Sorted by ASCII byte order for O(log n) binary search.
 const SKIP_VARS: &[&str] = &[
     "BASH",
     "BASHOPTS",
@@ -37,8 +34,8 @@ const SKIP_VARS: &[&str] = &[
     "LINES",
     "MACHTYPE",
     "MAILCHECK",
-    "OPTERR",
     "OLDPWD",
+    "OPTERR",
     "OPTIND",
     "OSTYPE",
     "PIPESTATUS",
@@ -64,33 +61,15 @@ pub struct EnvSnapshot {
 }
 
 impl EnvSnapshot {
-    /// Capture just the current environment (no user command).
-    pub fn capture_current() -> Result<Self, String> {
-        let script = format!(
-            "echo '{}'\nenv -0\necho '{}'\npwd",
-            ENV_MARKER, CWD_MARKER,
-        );
-
-        let output = Command::new("bash")
-            .args(["-c", &script])
-            .output()
-            .map_err(|e| format!("failed to run bash: {}", e))?;
-
-        let stdout = String::from_utf8_lossy(&output.stdout);
-
-        let env_start = stdout.find(ENV_MARKER);
-        let cwd_start = stdout.find(CWD_MARKER);
-
-        let (vars, cwd) = match (env_start, cwd_start) {
-            (Some(env_pos), Some(cwd_pos)) => {
-                let env_section = &stdout[env_pos + ENV_MARKER.len()..cwd_pos];
-                let cwd_section = stdout[cwd_pos + CWD_MARKER.len()..].trim();
-                (parse_null_separated_env(env_section), cwd_section.to_string())
-            }
-            _ => (HashMap::new(), String::new()),
-        };
-
-        Ok(EnvSnapshot { vars, cwd })
+    /// Capture the current process environment, skipping bash-internal vars.
+    pub fn capture_current() -> Self {
+        let vars: HashMap<String, String> = std::env::vars()
+            .filter(|(k, _)| !should_skip_var(k))
+            .collect();
+        let cwd = std::env::current_dir()
+            .map(|p| p.to_string_lossy().into_owned())
+            .unwrap_or_default();
+        EnvSnapshot { vars, cwd }
     }
 
     /// Diff two snapshots, returning fish commands to apply the changes.
@@ -114,14 +93,22 @@ impl EnvSnapshot {
             };
 
             if changed {
+                let mut cmd = String::with_capacity(key.len() + new_val.len() + 12);
+                cmd.push_str("set -gx ");
+                cmd.push_str(key);
+                cmd.push(' ');
                 // PATH-like variables: split on : for fish list semantics
                 if key.ends_with("PATH") && new_val.contains(':') {
-                    let parts: Vec<&str> = new_val.split(':').collect();
-                    let fish_val = parts.join(" ");
-                    commands.push(format!("set -gx {} {}", key, fish_val));
+                    for (i, part) in new_val.split(':').enumerate() {
+                        if i > 0 {
+                            cmd.push(' ');
+                        }
+                        cmd.push_str(part);
+                    }
                 } else {
-                    commands.push(format!("set -gx {} {}", key, shell_escape(new_val)));
+                    cmd.push_str(&shell_escape(new_val));
                 }
+                commands.push(cmd);
             }
         }
 
@@ -131,13 +118,20 @@ impl EnvSnapshot {
                 continue;
             }
             if !after.vars.contains_key(key) {
-                commands.push(format!("set -e {}", key));
+                let mut cmd = String::with_capacity(key.len() + 8);
+                cmd.push_str("set -e ");
+                cmd.push_str(key);
+                commands.push(cmd);
             }
         }
 
         // Changed directory
         if !after.cwd.is_empty() && self.cwd != after.cwd {
-            commands.push(format!("cd {}", shell_escape(&after.cwd)));
+            let escaped = shell_escape(&after.cwd);
+            let mut cmd = String::with_capacity(escaped.len() + 3);
+            cmd.push_str("cd ");
+            cmd.push_str(&escaped);
+            commands.push(cmd);
         }
 
         commands
@@ -158,7 +152,7 @@ pub fn parse_null_separated_env(data: &str) -> HashMap<String, String> {
             let key = &entry[..eq_pos];
             let value = &entry[eq_pos + 1..];
             // Skip entries that don't look like valid variable names
-            if !key.is_empty() && key.chars().all(|c| c.is_alphanumeric() || c == '_') {
+            if !key.is_empty() && key.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'_') {
                 vars.insert(key.to_string(), value.to_string());
             }
         }
@@ -169,24 +163,48 @@ pub fn parse_null_separated_env(data: &str) -> HashMap<String, String> {
 
 /// Check if a variable should be skipped during env sync.
 fn should_skip_var(name: &str) -> bool {
-    SKIP_VARS.contains(&name)
+    SKIP_VARS.binary_search(&name).is_ok()
 }
 
 /// Escape a string for safe use in fish shell commands.
-fn shell_escape(s: &str) -> String {
+/// Returns `Cow::Borrowed` when no escaping is needed (avoids allocation).
+fn shell_escape(s: &str) -> Cow<'_, str> {
     // If it's simple (alphanumeric, slashes, dots, hyphens), no quoting needed
-    if s.chars()
-        .all(|c| c.is_alphanumeric() || matches!(c, '/' | '.' | '-' | '_' | ':' | '~' | '+' | ','))
-    {
-        return s.to_string();
+    if s.bytes().all(|b| {
+        b.is_ascii_alphanumeric()
+            || matches!(b, b'/' | b'.' | b'-' | b'_' | b':' | b'~' | b'+' | b',')
+    }) {
+        return Cow::Borrowed(s);
     }
     // Otherwise, single-quote it (escaping any internal single quotes)
-    format!("'{}'", s.replace('\'', "'\\''"))
+    let mut result = String::with_capacity(s.len() + 2);
+    result.push('\'');
+    for &b in s.as_bytes() {
+        if b == b'\'' {
+            result.push_str("'\\''");
+        } else {
+            result.push(b as char);
+        }
+    }
+    result.push('\'');
+    Cow::Owned(result)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn skip_vars_sorted() {
+        for pair in SKIP_VARS.windows(2) {
+            assert!(
+                pair[0] < pair[1],
+                "SKIP_VARS not sorted: {:?} >= {:?}",
+                pair[0],
+                pair[1]
+            );
+        }
+    }
 
     #[test]
     fn parse_null_env() {
@@ -301,8 +319,7 @@ mod tests {
 
     #[test]
     fn capture_current_env() {
-        // This test actually runs bash — integration test
-        let snap = EnvSnapshot::capture_current().unwrap();
+        let snap = EnvSnapshot::capture_current();
         assert!(!snap.vars.is_empty());
         assert!(!snap.cwd.is_empty());
         assert!(snap.vars.contains_key("HOME"));
