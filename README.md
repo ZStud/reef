@@ -2,8 +2,6 @@
 
 **Bash compatibility for fish shell. Just works.**
 
-(CHECK WIKI FOR UPDATE PLANS)
-
 Reef makes bash syntax work seamlessly inside [fish](https://fishshell.com). No prefix commands, no mode switching, no learning curve. You type bash — fish runs it.
 
 ```
@@ -86,8 +84,8 @@ unset VAR          →  set -e VAR
 source script.sh   →  bash sourcing with env capture
 ```
 
-**Tier 2 — AST Translation** (~1ms)
-A Rust-powered parser converts bash syntax to fish equivalents before execution.
+**Tier 2 — AST Translation** (~0.4ms)
+A custom zero-copy Rust parser converts bash syntax to fish equivalents before execution. Zero dependencies, zero allocations.
 ```
 for i in $(seq 5); do echo $i; done  →  for i in (seq 5); echo $i; end
 if [[ -n "$HOME" ]]; then echo y; fi →  if test -n "$HOME"; echo y; end
@@ -95,14 +93,13 @@ echo $((2 + 2))                      →  echo (math "2 + 2")
 ${var:-default}                      →  (set -q var; and echo $var; or echo "default")
 ```
 
-**Tier 3 — Bash Passthrough** (~3ms)
+**Tier 3 — Bash Passthrough** (~1.6ms)
 Anything too complex to translate runs through bash directly. Environment changes are captured and applied back to your fish session.
 ```
-source <(kubectl completion bash)    →  runs in bash, env synced to fish
 declare -A map=([k]=v)               →  runs in bash, output streamed
 ```
 
-Every tier falls back to the next. Nothing breaks — the worst case is 3ms of latency, which is still faster than zsh's startup time.
+Every tier falls back to the next. Nothing breaks — the worst case is 1.6ms of latency, which is faster than zsh's startup time.
 
 ---
 
@@ -123,27 +120,31 @@ reef history both          # log both
 
 ## What's Covered
 
-251 out of 251 bash constructs pass in the test suite.
+484 tests covering bash constructs across all tiers.
 
 | Category | Examples | Tier |
 |---|---|---|
-| Variables & export | `export`, `unset`, `declare`, `local` | 1 |
+| Variables & export | `export`, `unset`, `declare`, `local`, `readonly` | 1 |
 | Command substitution | `$(cmd)`, `` `cmd` ``, nested | 2 |
-| Conditionals | `if/then/fi`, `[[ ]]`, `[ ]`, `test` | 2 |
-| Loops | `for/do/done`, `while`, `until`, C-style `for` | 2 |
-| Arithmetic | `$(( ))`, `(( ))`, `let` | 2 |
-| Parameter expansion | `${:-}`, `${%%}`, `${//}`, `${#}`, `${^^}` | 2-3 |
-| Case statements | `case/esac` with patterns and fall-through | 2 |
-| Functions | `function f()`, local vars, return values | 2 |
-| Redirections | `2>&1`, `&>`, `>&`, append, fd manipulation | 2-3 |
-| Heredocs & herestrings | `<<EOF`, `<<<`, quoted delimiters | 3 |
-| Process substitution | `<()`, `>()` | 3 |
-| Arrays | Indexed and associative | 3 |
-| Traps & signals | `trap`, `EXIT`, `ERR` | 3 |
-| Coprocesses | `coproc`, named coprocesses | 3 |
+| Conditionals | `if/then/elif/else/fi`, `[[ ]]`, `[ ]`, `test` | 2 |
+| Loops | `for/do/done`, `while`, `until`, C-style `for ((i=0;...))` | 2 |
+| Arithmetic | `$(( ))`, `(( ))`, bitwise ops, ternary, pre/post inc/dec | 2 |
+| Parameter expansion | `${:-}`, `${%%}`, `${//}`, `${#}`, `${^^}`, `${,,}`, `${:offset:len}`, `${!ref}`, `${@Q}` | 2 |
+| String replacement | `${var/pat/rep}`, `${var//pat/rep}`, prefix/suffix anchored | 2 |
+| Case statements | `case/esac` with patterns, wildcards, char classes | 2 |
+| Functions | `name() {}`, `function name {}`, local vars, return | 2 |
+| Redirections | `2>&1`, `&>`, `&>>`, `>|`, `<>`, fd manipulation | 2 |
+| Here-strings | `<<<` | 2 |
+| Heredocs | `<<'EOF'`, `<<"EOF"` | 2 |
+| Process substitution | `<(cmd)` | 2 |
+| Arrays | `${arr[@]}`, `${#arr[@]}`, `${arr[i]}`, `arr+=()`, slicing | 2 |
+| Brace ranges | `{1..10}`, `{a..z}`, `{1..10..2}` | 2 |
+| Traps & signals | `trap 'cmd' EXIT`, `trap '' SIGINT` | 2 |
+| Special variables | `$?`, `$$`, `$!`, `$@`, `$#`, `$RANDOM` | 2 |
+| Real-world patterns | nvm, conda, pyenv, docker, curl\|bash, eval | 2-3 |
+| Associative arrays | `declare -A` | 3 |
+| Coprocesses | `coproc` | 3 |
 | Namerefs | `declare -n` | 3 |
-| Special variables | `$?`, `$$`, `$!`, `$RANDOM`, `$SECONDS` | 2-3 |
-| Real-world patterns | nvm, conda, pyenv, curl\|bash, eval | 1-3 |
 
 ---
 
@@ -198,18 +199,36 @@ Every `export PATH=...` and `eval "$(tool init)"` that any installer ever append
 |---|---|---|
 | Native fish | 0ms | Valid fish syntax |
 | Tier 1 keyword wrapper | <0.1ms | `export`, `unset`, `source` |
-| Tier 2 detection | <0.5ms | Every Enter keypress |
-| Tier 2 AST translation | ~1ms | Bash syntax detected |
-| Tier 3 bash passthrough | ~3ms | Complex/untranslatable bash |
+| Tier 2 detection | ~0.4ms | Every Enter keypress |
+| Tier 2 AST translation | ~0.4ms | Bash syntax detected |
+| Tier 3 bash passthrough | ~1.6ms | Complex/untranslatable bash |
 
-The binary is 1.2MB with LTO and strip. Detection runs on every keypress and adds zero perceptible latency. Even the slowest path (3ms passthrough) is faster than zsh's startup time with oh-my-zsh.
+The binary is 468KB with zero dependencies, LTO, and strip. Detection runs on every keypress and adds zero perceptible latency. Even the slowest path (1.6ms passthrough) is faster than zsh's startup time with oh-my-zsh.
+
+---
+
+## v0.2 — What Changed
+
+Custom zero-copy parser replacing conch-parser, full optimization pass across every subsystem. See the [wiki](https://github.com/ZStud/reef/wiki/v0.2-Custom-Parser-&-Optimization-Pass) for the complete changelog.
+
+**Highlights:**
+- **Binary:** 1.16MB → 468KB (60% smaller)
+- **Dependencies:** 23 crates → 0
+- **Tests:** 130 → 484
+- **AST translation:** ~1ms → ~0.4ms
+- **Bash passthrough:** ~3ms → ~1.6ms
+- Custom recursive-descent parser (lexer + AST + parser, 3,300 lines)
+- Zero-copy `&'a str` AST — no allocations during parse
+- Rust edition 2024, zero clippy warnings
+- Fixed detection false positives on single-quoted strings
+- Fixed parser infinite loop on empty case arm bodies
 
 ---
 
 ## FAQ
 
 **Does this slow down fish?**
-No. Detection is sub-millisecond string matching — no regex, no parsing. If your command is native fish, reef adds zero overhead. You literally cannot perceive it.
+No. Detection is a sub-millisecond byte scan — no regex, no parsing. If your command is native fish, reef adds zero overhead. You literally cannot perceive it.
 
 **Does this change fish's behavior?**
 No. Fish is still fish. Your prompt, completions, autosuggestions, syntax highlighting, and config all work exactly the same. Reef only activates when it detects bash syntax.
@@ -232,7 +251,7 @@ Reef is an independent project. It uses fish's public APIs (functions, keybindin
 
 Run the test suite:
 ```bash
-bash tests/reef_test_suite.sh
+cargo test
 ```
 
 If you find a bash construct that doesn't work, open an issue with the command and expected output. That becomes a test case and a fix.
