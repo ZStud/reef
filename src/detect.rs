@@ -11,14 +11,21 @@ pub fn looks_like_bash(input: &str) -> bool {
     let mut has_brace = false;
     let mut has_eq = false;
     let mut has_paren = false;
+    let mut in_dquote = false;
     let mut i = 0;
     while i < len {
         let b = bytes[i];
         let next = if i + 1 < len { bytes[i + 1] } else { 0 };
         match b {
+            // Track double-quote state so we don't treat ' inside "..." as
+            // a single-quote delimiter (e.g. "it's $((2+2)) o'clock").
+            b'\\' if in_dquote => { i += 2; continue; }
+            b'"' if !in_dquote => { in_dquote = true; i += 1; continue; }
+            b'"' if in_dquote => { in_dquote = false; i += 1; continue; }
             // Skip single-quoted sections — everything is literal inside.
             // Prevents false positives like awk '{print $1}'.
-            b'\'' => {
+            // But inside double quotes, ' is just a literal character.
+            b'\'' if !in_dquote => {
                 // $'...' (ANSI-C quoting) IS bash-specific.
                 if i > 0 && bytes[i - 1] == b'$' {
                     return true;
@@ -358,6 +365,8 @@ mod tests {
         // But $(( )) is bash arithmetic — still detected
         assert!(looks_like_bash("echo $((2 + 2))"));
         assert!(looks_like_bash("echo $((1+2))"));
+        // $(( )) inside double quotes with apostrophes must still be detected
+        assert!(looks_like_bash(r#"echo "Hello $(whoami), it's $((2+2)) o'clock""#));
     }
 
     #[test]

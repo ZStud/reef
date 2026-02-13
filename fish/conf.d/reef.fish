@@ -56,8 +56,8 @@ function __reef_execute
         return
     end
 
-    if reef detect --quick -- $cmd 2>/dev/null
-        set -l translated (reef translate -- $cmd 2>/dev/null)
+    if reef detect --quick -- "$cmd" 2>/dev/null
+        set -l translated (reef translate -- "$cmd" 2>/dev/null)
         set -l translate_status $status
         if test $translate_status -eq 0; and test -n "$translated"
             set -l oneliner (string join "; " -- $translated)
@@ -83,7 +83,7 @@ function __reef_execute
         end
 
         # Translation failed — fall back to bash passthrough.
-        set -l safe_cmd (string replace -a "'" "'\\''" -- $cmd)
+        set -l safe_cmd (string replace -a "'" "'\\''" -- "$cmd")
         set -l fallback "reef bash-exec -- '$safe_cmd' | source"
 
         # In bash display mode: flag for preexec overwrite
