@@ -187,6 +187,16 @@ reef persist state         # exported vars persist across commands
 reef persist full          # persistent bash coprocess — everything persists
 ```
 
+Any setting command accepts `--silent` to suppress the confirmation echo:
+
+```
+reef on --silent           # enable without printing to terminal
+reef persist full --silent # start coprocess quietly
+reef confirm on --silent   # enable confirm mode quietly
+```
+
+The flag works in any position (`reef --silent off`, `reef persist --silent state`, etc.). Status queries and error messages are never silenced.
+
 ---
 
 ## Confirm Mode
