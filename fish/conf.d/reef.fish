@@ -320,13 +320,25 @@ end
 
 # --- Toggle / Settings ---
 function reef --description "reef: bash compatibility settings"
+    # Check for --silent flag and strip it from argv
+    set -l _silent false
+    set -l _args
+    for _a in $argv
+        if test "$_a" = --silent
+            set _silent true
+        else
+            set -a _args $_a
+        end
+    end
+    set argv $_args
+
     switch "$argv[1]"
         case on enable
             set -g reef_enabled true
-            echo "reef: translation enabled"
+            test "$_silent" != true; and echo "reef: translation enabled"
         case off disable
             set -g reef_enabled false
-            echo "reef: translation disabled"
+            test "$_silent" != true; and echo "reef: translation disabled"
         case status ''
             set -l confirm_label (test "$reef_confirm" = true; and echo on; or echo off)
             if test "$reef_enabled" = true
@@ -338,10 +350,10 @@ function reef --description "reef: bash compatibility settings"
             switch "$argv[2]"
                 case bash
                     set -g reef_display bash
-                    echo "reef: display → original bash commands"
+                    test "$_silent" != true; and echo "reef: display → original bash commands"
                 case fish
                     set -g reef_display fish
-                    echo "reef: display → translated fish commands"
+                    test "$_silent" != true; and echo "reef: display → translated fish commands"
                 case '' status
                     echo "reef: display mode: $reef_display"
                 case '*'
@@ -351,13 +363,13 @@ function reef --description "reef: bash compatibility settings"
             switch "$argv[2]"
                 case bash
                     set -g reef_history_mode bash
-                    echo "reef: history → original bash commands"
+                    test "$_silent" != true; and echo "reef: history → original bash commands"
                 case fish
                     set -g reef_history_mode fish
-                    echo "reef: history → translated fish commands"
+                    test "$_silent" != true; and echo "reef: history → translated fish commands"
                 case both
                     set -g reef_history_mode both
-                    echo "reef: history → both bash and fish commands"
+                    test "$_silent" != true; and echo "reef: history → both bash and fish commands"
                 case '' status
                     echo "reef: history mode: $reef_history_mode"
                 case '*'
@@ -377,7 +389,7 @@ function reef --description "reef: bash compatibility settings"
                         set -e __reef_daemon_socket
                     end
                     set -g reef_persist_mode off
-                    echo "reef: persistence off (fresh bash each time)"
+                    test "$_silent" != true; and echo "reef: persistence off (fresh bash each time)"
                 case state
                     # Stop daemon if switching from full
                     if set -q __reef_daemon_socket
@@ -386,7 +398,7 @@ function reef --description "reef: bash compatibility settings"
                     end
                     set -g reef_persist_mode state
                     set -g __reef_state_file /tmp/reef-state-$fish_pid
-                    echo "reef: persistence → state (exported vars persist across commands)"
+                    test "$_silent" != true; and echo "reef: persistence → state (exported vars persist across commands)"
                 case full
                     # Clean up state file if switching from state
                     if set -q __reef_state_file; and test -f "$__reef_state_file"
@@ -396,7 +408,7 @@ function reef --description "reef: bash compatibility settings"
                     set -g reef_persist_mode full
                     set -g __reef_daemon_socket /tmp/reef-$fish_pid.sock
                     command reef daemon start --socket $__reef_daemon_socket
-                    echo "reef: persistence → full (persistent bash coprocess)"
+                    test "$_silent" != true; and echo "reef: persistence → full (persistent bash coprocess)"
                 case status ''
                     echo "reef: persist mode: $reef_persist_mode"
                 case '*'
@@ -406,10 +418,10 @@ function reef --description "reef: bash compatibility settings"
             switch "$argv[2]"
                 case on
                     set -g reef_confirm true
-                    echo "reef: confirm → prompt before execution"
+                    test "$_silent" != true; and echo "reef: confirm → prompt before execution"
                 case off
                     set -g reef_confirm false
-                    echo "reef: confirm → execute immediately"
+                    test "$_silent" != true; and echo "reef: confirm → execute immediately"
                 case '' status
                     if test "$reef_confirm" = true
                         echo "reef: confirm mode: on"
