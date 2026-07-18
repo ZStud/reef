@@ -189,7 +189,7 @@ function __reef_execute
     # through the coprocess. Known commands (builtins, functions, PATH binaries)
     # stay in fish — they work the same and keep reef-tools wrappers alive.
     if test "$reef_persist_mode" = full; and set -q __reef_daemon_socket
-        set -l first_word (string split -m1 ' ' -- $cmd)[1]
+        set -l first_word (string match -r '^[^\s|;&]+' -- $cmd)
         if reef detect --quick -- "$cmd" 2>/dev/null; or not type -q $first_word
             if not __reef_confirm_prompt daemon
                 return
